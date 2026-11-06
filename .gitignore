@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+
+# Backups do banco (gerados automaticamente pela migração)
+# Obs.: os bancos de dados (*.db) SÃO versionados (PJIdb_v2.db e tests/fixtures/*.db).
+*.db.bak
+*.db.*.bak
+
+# Logs e saídas de servidores locais
+*.log
+*.err
+
+.env
+

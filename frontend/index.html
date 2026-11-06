@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QG da Construção - Controle de Estoque</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tema.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/estilo.css">
+
+    <!-- Configuração opcional (sobrescreve a URL padrão da API):
+         <script>window.QG_CONFIG = { apiUrl: 'https://api.exemplo.com' };</script> -->
+</head>
+<body class="bg-vermelhao-40 font-sans antialiased text-vermelhao-160">
+
+    <div id="area-toasts"></div>
+
+    <div id="tela-login" class="tela-login fixed inset-0 flex items-center justify-center p-4">
+        <div class="cartao-login bg-white/95 rounded-2xl shadow-2xl w-full max-w-sm p-8">
+            <div class="flex flex-col items-center mb-6">
+                <div class="bg-vermelhao-190 p-3 rounded-xl mb-3">
+                    <i data-lucide="hard-hat" class="w-8 h-8 text-vermelhao-110"></i>
+                </div>
+                <h1 class="font-display font-bold text-xl text-vermelhao-180 tracking-tight">QG Construção</h1>
+                <p class="text-sm text-vermelhao-130">Controle de Estoque</p>
+            </div>
+
+            <form id="form-login" onsubmit="TelaLogin.entrar(event)">
+                <div class="mb-3">
+                    <label for="login-usuario" class="block text-xs font-semibold text-vermelhao-150 mb-1">Usuário</label>
+                    <input type="text" id="login-usuario" required autocomplete="username"
+                        class="w-full bg-white border border-vermelhao-70 rounded-lg p-2.5 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                </div>
+                <div class="mb-4">
+                    <label for="login-senha" class="block text-xs font-semibold text-vermelhao-150 mb-1">Senha</label>
+                    <input type="password" id="login-senha" required autocomplete="current-password"
+                        class="w-full bg-white border border-vermelhao-70 rounded-lg p-2.5 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                </div>
+                <p id="login-erro" class="oculto text-danger-600 text-xs mb-3"></p>
+                <button type="submit" id="login-botao"
+                    class="w-full bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow-sm disabled:opacity-60">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="tela-troca-senha" class="tela-login fixed inset-0 flex items-center justify-center p-4 oculto">
+        <div class="cartao-login bg-white/95 rounded-2xl shadow-2xl w-full max-w-sm p-8">
+            <div class="flex flex-col items-center mb-6">
+                <div class="bg-vermelhao-190 p-3 rounded-xl mb-3">
+                    <i data-lucide="lock-keyhole" class="w-8 h-8 text-vermelhao-110"></i>
+                </div>
+                <h1 class="font-display font-bold text-xl text-vermelhao-180 tracking-tight">Defina sua senha</h1>
+                <p class="text-sm text-vermelhao-130 text-center">No primeiro acesso é preciso trocar a senha provisória.</p>
+            </div>
+
+            <form id="form-troca-senha" onsubmit="TelaTrocaSenha.enviar(event)">
+                <div class="mb-3">
+                    <label for="troca-senha-atual" class="block text-xs font-semibold text-vermelhao-150 mb-1">Senha atual (provisória)</label>
+                    <input type="password" id="troca-senha-atual" required autocomplete="current-password"
+                        class="w-full bg-white border border-vermelhao-70 rounded-lg p-2.5 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                </div>
+                <div class="mb-3">
+                    <label for="troca-senha-nova" class="block text-xs font-semibold text-vermelhao-150 mb-1">Nova senha</label>
+                    <input type="password" id="troca-senha-nova" required minlength="8" autocomplete="new-password"
+                        class="w-full bg-white border border-vermelhao-70 rounded-lg p-2.5 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                </div>
+                <div class="mb-4">
+                    <label for="troca-senha-conf" class="block text-xs font-semibold text-vermelhao-150 mb-1">Confirme a nova senha</label>
+                    <input type="password" id="troca-senha-conf" required minlength="8" autocomplete="new-password"
+                        class="w-full bg-white border border-vermelhao-70 rounded-lg p-2.5 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                </div>
+                <p class="text-xs text-vermelhao-130 mb-3">A senha deve ter ao menos 8 caracteres.</p>
+                <p id="troca-erro" class="oculto text-danger-600 text-xs mb-3"></p>
+                <button type="submit" id="troca-botao"
+                    class="w-full bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow-sm disabled:opacity-60">
+                    Salvar nova senha
+                </button>
+                <button type="button" onclick="TelaTrocaSenha.sair()"
+                    class="w-full text-vermelhao-130 hover:text-vermelhao-180 text-xs mt-3">
+                    Sair
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app" class="flex h-screen overflow-hidden oculto">
+        <aside class="w-64 bg-vermelhao-190 text-vermelhao-70 flex flex-col justify-between flex-shrink-0">
+            <div>
+                <div class="p-5 flex items-center gap-3 border-b border-vermelhao-170">
+                    <i data-lucide="hard-hat" class="w-8 h-8 text-vermelhao-110"></i>
+                    <div>
+                        <h1 class="font-display font-bold text-lg text-vermelhao-10 leading-tight tracking-tight">QG Construção</h1>
+                        <p class="text-xs text-vermelhao-90">Controle de Estoque</p>
+                    </div>
+                </div>
+
+                <nav class="mt-6 flex flex-col gap-1 px-3">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition active-tab">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('produtos')" id="tab-produtos" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition">
+                        <i data-lucide="package" class="w-5 h-5"></i> Produtos
+                    </button>
+                    <button onclick="switchTab('reativar')" id="tab-reativar" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition relative">
+                        <i data-lucide="archive-restore" class="w-5 h-5"></i> Reativar Produtos
+                        <span id="reativar-badge" class="ml-auto bg-vermelhao-140 text-vermelhao-10 text-xs px-2 py-0.5 rounded-full hidden">0</span>
+                    </button>
+                    <button onclick="switchTab('inventario')" id="tab-inventario" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition">
+                        <i data-lucide="clipboard-list" class="w-5 h-5"></i> Inventário
+                    </button>
+                    <button onclick="switchTab('vendas')" id="tab-vendas" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition">
+                        <i data-lucide="receipt" class="w-5 h-5"></i> Vendas
+                    </button>
+                    <button onclick="switchTab('compras')" id="tab-compras" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i> Compras
+                    </button>
+                    <button onclick="switchTab('fornecedores')" id="tab-fornecedores" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition">
+                        <i data-lucide="truck" class="w-5 h-5"></i> Fornecedores
+                    </button>
+                    <button onclick="switchTab('clientes')" id="tab-clientes" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition">
+                        <i data-lucide="users" class="w-5 h-5"></i> Clientes
+                    </button>
+                    <button onclick="switchTab('colaboradores')" id="tab-colaboradores" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition hidden">
+                        <i data-lucide="user-cog" class="w-5 h-5"></i> Colaboradores
+                    </button>
+                    <button onclick="switchTab('categorias')" id="tab-categorias" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition">
+                        <i data-lucide="tags" class="w-5 h-5"></i> Categorias
+                    </button>
+                    <button onclick="switchTab('locais')" id="tab-locais" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition">
+                        <i data-lucide="store" class="w-5 h-5"></i> Locais / Lojas
+                    </button>
+                    <button onclick="switchTab('alertas')" id="tab-alertas" class="nav-item border-l-4 border-transparent flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-vermelhao-180 transition relative">
+                        <i data-lucide="bell" class="w-5 h-5"></i> Alertas
+                        <span id="alert-badge" class="ml-auto bg-danger-500 text-vermelhao-10 text-xs px-2 py-0.5 rounded-full hidden">0</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="p-4 border-t border-vermelhao-170 text-xs text-vermelhao-110">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="truncate">Logado: <strong id="usuario-logado" class="text-vermelhao-70"></strong></span>
+                    <button onclick="TelaLogin.sair()" class="flex items-center gap-1 text-vermelhao-110 hover:text-danger-300 transition flex-shrink-0" title="Sair">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <p class="text-center mt-2">QG da Construção &copy; 2026</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-8">
+            <section id="view-dashboard" class="content-view">
+                <h2 class="font-display text-2xl font-bold text-vermelhao-180 mb-6 tracking-tight">Visão Geral</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-5 rounded-xl border border-vermelhao-60 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-vermelhao-130">Total de Produtos</p>
+                            <h3 id="dash-total-produtos" class="text-2xl font-bold text-vermelhao-180 mt-1">0</h3>
+                        </div>
+                        <div class="bg-vermelhao-40 p-3 rounded-lg text-vermelhao-130"><i data-lucide="package" class="w-6 h-6"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-vermelhao-60 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-vermelhao-130">Alertas de Estoque</p>
+                            <h3 id="dash-alertas-count" class="text-2xl font-bold text-danger-600 mt-1">0</h3>
+                        </div>
+                        <div class="bg-danger-100 p-3 rounded-lg text-danger-600"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-vermelhao-60 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-vermelhao-130">Fornecedores</p>
+                            <h3 id="dash-fornecedores-count" class="text-2xl font-bold text-vermelhao-180 mt-1">0</h3>
+                        </div>
+                        <div class="bg-info-100 p-3 rounded-lg text-info-600"><i data-lucide="truck" class="w-6 h-6"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-vermelhao-60 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-vermelhao-130">Categorias</p>
+                            <h3 id="dash-categorias-count" class="text-2xl font-bold text-vermelhao-180 mt-1">0</h3>
+                        </div>
+                        <div class="bg-success-100 p-3 rounded-lg text-success-600"><i data-lucide="tags" class="w-6 h-6"></i></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-produtos" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Cadastro de Produtos</h2>
+                    <button onclick="openModal('modal-produto')" class="bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Novo Produto
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">ID</th><th class="p-4">Nome</th><th class="p-4">Categoria</th><th class="p-4">Quantidade</th><th class="p-4">Preço Unit.</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-produtos" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-reativar" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Produtos Desativados</h2>
+                        <p class="text-sm text-vermelhao-130 mt-1">Produtos desativados não aparecem nas listagens nem podem ser movimentados. Reative para voltar a usá-los; o histórico e o saldo são preservados.</p>
+                    </div>
+                    <input type="search" id="reativar-busca" oninput="renderDesativados()" placeholder="Buscar por nome ou SKU"
+                        class="w-64 flex-shrink-0 border border-vermelhao-70 bg-white rounded-lg p-2 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">ID</th><th class="p-4">Nome</th><th class="p-4">Categoria</th><th class="p-4">Saldo</th><th class="p-4">Preço Unit.</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-desativados" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-inventario" class="content-view hidden">
+                <div class="flex justify-between items-center mb-4 gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Inventário</h2>
+                        <p class="text-sm text-vermelhao-130 mt-1">Conferência do estoque por local: conte o que há na prateleira (gera ajuste) e transfira entre locais. Lançamentos e histórico ficam nas abas abaixo.</p>
+                    </div>
+                    <button onclick="Telas.inventario.abrirMovimentacao()" class="bg-vermelhao-170 hover:bg-vermelhao-180 text-vermelhao-10 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm flex-shrink-0">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Lançar movimentação
+                    </button>
+                </div>
+
+                <div class="flex gap-2 mb-5 border-b border-vermelhao-60">
+                    <button onclick="Telas.inventario.trocarAba('contagem')" id="inv-aba-contagem" class="inv-aba px-4 py-2 text-sm font-semibold border-b-2 border-vermelhao-140 text-vermelhao-180">Contagem por local</button>
+                    <button onclick="Telas.inventario.trocarAba('historico')" id="inv-aba-historico" class="inv-aba px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-vermelhao-120">Histórico</button>
+                </div>
+
+                <div id="inv-painel-contagem">
+                    <div class="flex flex-wrap items-center gap-3 mb-4">
+                        <label class="text-xs font-semibold text-vermelhao-150">Local:</label>
+                        <select id="inv-local" class="campo max-w-xs" onchange="Telas.inventario.carregarContagem()"></select>
+                        <input type="search" id="inv-busca" oninput="Telas.inventario.renderContagem()" placeholder="Buscar produto..."
+                            class="w-64 border border-vermelhao-70 bg-white rounded-lg p-2 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                        <span id="inv-resumo" class="text-xs text-vermelhao-130 ml-auto"></span>
+                    </div>
+                    <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                        <table class="w-full text-left text-sm text-vermelhao-150">
+                            <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                                <tr><th class="p-4">Produto</th><th class="p-4">Saldo no sistema</th><th class="p-4">Contado</th><th class="p-4">Diferença</th><th class="p-4">Transferir para</th><th class="p-4 text-center">Ações</th></tr>
+                            </thead>
+                            <tbody id="lista-contagem" class="divide-y divide-vermelhao-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="inv-painel-historico" class="hidden">
+                    <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                        <table class="w-full text-left text-sm text-vermelhao-150">
+                            <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                                <tr><th class="p-4">Data/Hora</th><th class="p-4">Produto</th><th class="p-4">Local</th><th class="p-4">Tipo</th><th class="p-4">Qtd.</th><th class="p-4">Observação</th></tr>
+                            </thead>
+                            <tbody id="lista-movimentacoes" class="divide-y divide-vermelhao-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-vendas" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Vendas</h2>
+                        <p class="text-sm text-vermelhao-130 mt-1">Cada venda baixa o estoque <strong>do local escolhido</strong>. Cancelar devolve as quantidades ao mesmo local.</p>
+                    </div>
+                    <button onclick="Telas.vendas.abrir()" class="bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm flex-shrink-0">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Nova Venda
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">Nº</th><th class="p-4">Data</th><th class="p-4">Cliente</th><th class="p-4">Local</th><th class="p-4">Total</th><th class="p-4">Situação</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-vendas" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-alertas" class="content-view hidden">
+                <h2 class="font-display text-2xl font-bold text-vermelhao-180 mb-6 tracking-tight">Alertas de Estoque Mínimo</h2>
+                <div id="lista-alertas" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+
+            <section id="view-compras" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Gestão de Compras</h2>
+                    <button onclick="openModal('modal-compra')" class="bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Nova Compra
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">Nº</th><th class="p-4">Data</th><th class="p-4">Fornecedor</th><th class="p-4">Nota Fiscal</th><th class="p-4">Total</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-compras" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-fornecedores" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Fornecedores</h2>
+                    <button onclick="abrirFornecedor()" class="bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Novo Fornecedor
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">ID</th><th class="p-4">Nome</th><th class="p-4">CNPJ</th><th class="p-4">Telefone</th><th class="p-4">E-mail</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-fornecedores" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-clientes" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Clientes</h2>
+                        <p class="text-sm text-vermelhao-130 mt-1">Clientes da loja (não fazem login). Cliente é opcional na venda; o CPF não pode se repetir.</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <input type="search" id="clientes-busca" oninput="Telas.clientes.carregar()" placeholder="Buscar por nome ou CPF"
+                            class="w-56 border border-vermelhao-70 bg-white rounded-lg p-2 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                        <label class="flex items-center gap-2 text-xs text-vermelhao-130">
+                            <input type="checkbox" id="clientes-mostrar-inativos" onchange="Telas.clientes.carregar()">
+                            Mostrar inativos
+                        </label>
+                        <button onclick="abrirCliente()" class="bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Novo Cliente
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">ID</th><th class="p-4">Nome</th><th class="p-4">CPF</th><th class="p-4">Telefone</th><th class="p-4">E-mail</th><th class="p-4">Situação</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-clientes" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-colaboradores" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Colaboradores</h2>
+                        <p class="text-sm text-vermelhao-130 mt-1">Usuários que acessam o sistema (exclusivo do administrador). Ao criar ou resetar a senha, ela é provisória e deve ser trocada no primeiro acesso.</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <input type="search" id="colab-busca" oninput="Telas.colaboradores.carregar()" placeholder="Buscar por nome, usuário ou CPF"
+                            class="w-64 border border-vermelhao-70 bg-white rounded-lg p-2 text-sm focus:outline-none focus:border-vermelhao-120 focus:ring-2 focus:ring-vermelhao-110/20">
+                        <button onclick="abrirColaborador()" class="bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i> Novo Colaborador
+                        </button>
+                    </div>
+                </div>
+                <div id="colab-senha-aviso" class="hidden mb-4 bg-success-50 border border-success-200 text-success-800 rounded-lg p-3 text-sm flex items-start justify-between gap-3">
+                    <div>
+                        <p class="font-semibold">Senha provisória gerada</p>
+                        <p>Repasse ao colaborador: <code id="colab-senha-valor" class="font-mono bg-white px-2 py-0.5 rounded border border-success-200 select-all"></code></p>
+                        <p class="text-xs text-success-700 mt-1">Ela aparece só uma vez e deve ser trocada no primeiro acesso.</p>
+                    </div>
+                    <button type="button" onclick="$('colab-senha-aviso').classList.add('hidden')" class="text-success-700 hover:text-success-900 text-lg leading-none">&times;</button>
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">ID</th><th class="p-4">Nome</th><th class="p-4">Usuário</th><th class="p-4">Perfil</th><th class="p-4">CPF</th><th class="p-4">Contato</th><th class="p-4">Situação</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-colaboradores" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-categorias" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Categorias</h2>
+                    <button onclick="abrirCategoria()" class="bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Nova Categoria
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">ID</th><th class="p-4">Nome</th><th class="p-4">Descrição</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-categorias" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-locais" class="content-view hidden">
+                <div class="flex justify-between items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-vermelhao-180 tracking-tight">Locais / Lojas</h2>
+                        <p class="text-sm text-vermelhao-130 mt-1">Onde o estoque fica e de onde a mercadoria sai. Há um único <strong>depósito</strong> e quantas lojas forem necessárias; compras entram no depósito e as transferências/vendas movimentam cada local.</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <label class="flex items-center gap-2 text-xs text-vermelhao-130">
+                            <input type="checkbox" id="locais-mostrar-inativos" onchange="Telas.locais.carregar(this.checked)">
+                            Mostrar inativos
+                        </label>
+                        <button onclick="abrirLocal()" class="bg-vermelhao-140 hover:bg-vermelhao-150 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Novo Local
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl border border-vermelhao-60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm text-vermelhao-150">
+                        <thead class="bg-vermelhao-30 border-b border-vermelhao-60 text-vermelhao-170 font-semibold uppercase text-xs">
+                            <tr><th class="p-4">Nome</th><th class="p-4">Tipo</th><th class="p-4">CNPJ / Endereço</th><th class="p-4">Contato</th><th class="p-4">Saldo</th><th class="p-4">Situação</th><th class="p-4 text-center">Ações</th></tr>
+                        </thead>
+                        <tbody id="lista-locais" class="divide-y divide-vermelhao-50"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-produto" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+            <h3 class="font-display text-lg font-bold text-vermelhao-180 mb-4">Adicionar Produto</h3>
+            <form id="form-produto" onsubmit="salvarProduto(event)">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="mb-3 col-span-2">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Nome do Produto *</label>
+                        <input type="text" id="prod-nome" required class="campo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">SKU</label>
+                        <input type="text" id="prod-sku" class="campo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Unidade</label>
+                        <input type="text" id="prod-unidade" value="un" class="campo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Preço de custo (R$)</label>
+                        <input type="number" min="0" step="0.01" id="prod-custo" class="campo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Preço de venda (R$)</label>
+                        <input type="number" min="0" step="0.01" id="prod-venda" class="campo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Estoque mínimo</label>
+                        <input type="number" min="0" step="1" id="prod-minimo" value="0" class="campo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Estoque máximo</label>
+                        <input type="number" min="0" step="1" id="prod-maximo" class="campo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Categoria</label>
+                        <select id="prod-categoria" class="campo"><option value="">Sem categoria</option></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Fornecedor</label>
+                        <select id="prod-fornecedor" class="campo"><option value="">Sem fornecedor</option></select>
+                    </div>
+                    <div class="mb-3 col-span-2">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Descrição</label>
+                        <input type="text" id="prod-descricao" class="campo">
+                    </div>
+                </div>
+                <p class="text-xs text-vermelhao-130 mt-1">O estoque inicial deve ser lançado depois no Inventário, como uma entrada.</p>
+                <div class="flex justify-end gap-2 mt-5">
+                    <button type="button" onclick="closeModal('modal-produto')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-movimentacao" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 class="font-display text-lg font-bold text-vermelhao-180 mb-4">Registrar Movimentação</h3>
+            <form id="form-movimentacao" onsubmit="salvarMovimentacao(event)">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Produto *</label>
+                    <select id="mov-produto" required class="campo" onchange="Telas.movimentacoes.atualizarSaldoLocal()"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Local *</label>
+                        <select id="mov-local" required class="campo" onchange="Telas.movimentacoes.atualizarSaldoLocal()"></select>
+                        <p id="mov-saldo-local" class="text-xs text-vermelhao-130 mt-1"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Tipo *</label>
+                        <select id="mov-tipo" required class="campo">
+                            <option value="ENTRADA">Entrada</option><option value="SAIDA">Saída</option><option value="PERDA">Perda</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Quantidade *</label>
+                    <input type="number" min="0.000001" step="any" id="mov-quantidade" required class="campo">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Observação</label>
+                    <input type="text" id="mov-observacao" class="campo">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Registrado por</label>
+                    <input type="text" id="mov-registrado-por" class="campo">
+                </div>
+                <div class="flex justify-end gap-2 mt-5">
+                    <button type="button" onclick="closeModal('modal-movimentacao')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario-escuro">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-fornecedor" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 id="forn-titulo" class="font-display text-lg font-bold text-vermelhao-180 mb-4">Adicionar Fornecedor</h3>
+            <form id="form-fornecedor" onsubmit="salvarFornecedor(event)">
+                <input type="hidden" id="forn-id">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Nome *</label>
+                    <input type="text" id="forn-nome" required class="campo">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">CNPJ</label>
+                        <input type="text" id="forn-cnpj" class="campo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Telefone</label>
+                        <input type="text" id="forn-telefone" class="campo">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">E-mail</label>
+                    <input type="email" id="forn-email" class="campo">
+                </div>
+                <div class="flex justify-end gap-2 mt-5">
+                    <button type="button" onclick="closeModal('modal-fornecedor')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-cliente" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+            <h3 id="cli-titulo" class="font-display text-lg font-bold text-vermelhao-180 mb-4">Novo Cliente</h3>
+            <form id="form-cliente" onsubmit="salvarCliente(event)">
+                <input type="hidden" id="cli-id">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Nome *</label>
+                    <input type="text" id="cli-nome" required class="campo">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">CPF</label>
+                        <input type="text" id="cli-cpf" class="campo" placeholder="000.000.000-00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Telefone</label>
+                        <input type="text" id="cli-telefone" class="campo">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">E-mail</label>
+                    <input type="email" id="cli-email" class="campo">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Endereço</label>
+                    <input type="text" id="cli-endereco" class="campo">
+                </div>
+                <div class="flex justify-end gap-2 mt-5">
+                    <button type="button" onclick="closeModal('modal-cliente')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-colaborador" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+            <h3 id="colab-titulo" class="font-display text-lg font-bold text-vermelhao-180 mb-4">Novo Colaborador</h3>
+            <form id="form-colaborador" onsubmit="salvarColaborador(event)">
+                <input type="hidden" id="colab-id">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Nome completo *</label>
+                    <input type="text" id="colab-nome" required class="campo">
+                </div>
+                <div class="mb-3" id="colab-campo-usuario">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Usuário (login) *</label>
+                    <input type="text" id="colab-usuario" class="campo" autocomplete="off" placeholder="ex.: maria.silva">
+                    <p class="text-xs text-vermelhao-130 mt-1">Não pode ser alterado depois. Mínimo 3 caracteres.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">CPF *</label>
+                        <input type="text" id="colab-cpf" class="campo" placeholder="000.000.000-00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Telefone *</label>
+                        <input type="text" id="colab-telefone" class="campo">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">E-mail *</label>
+                    <input type="email" id="colab-email" class="campo">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Perfil *</label>
+                    <select id="colab-perfil" required class="campo">
+                        <option value="vendedor">Vendedor</option>
+                        <option value="gerente">Gerente</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <p class="text-xs text-vermelhao-130">A senha é gerada pelo sistema (provisória).</p>
+                <div class="flex justify-end gap-2 mt-5">
+                    <button type="button" onclick="closeModal('modal-colaborador')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-categoria" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 id="cat-titulo" class="font-display text-lg font-bold text-vermelhao-180 mb-4">Adicionar Categoria</h3>
+            <form id="form-categoria" onsubmit="salvarCategoria(event)">
+                <input type="hidden" id="cat-id">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Nome *</label>
+                    <input type="text" id="cat-nome" required class="campo">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Descrição</label>
+                    <input type="text" id="cat-descricao" class="campo">
+                </div>
+                <div class="flex justify-end gap-2 mt-5">
+                    <button type="button" onclick="closeModal('modal-categoria')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-local" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+            <h3 id="local-titulo" class="font-display text-lg font-bold text-vermelhao-180 mb-4">Novo Local</h3>
+            <form id="form-local" onsubmit="salvarLocal(event)">
+                <input type="hidden" id="local-codigo-original">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Nome *</label>
+                    <input type="text" id="local-nome" required class="campo" placeholder="Ex.: Loja Centro">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Tipo *</label>
+                        <select id="local-tipo" required class="campo">
+                            <option value="loja">Loja</option><option value="deposito">Depósito</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Código</label>
+                        <input type="text" id="local-codigo" class="campo" placeholder="loja-centro">
+                    </div>
+                </div>
+                <p id="local-dica-codigo" class="text-xs text-vermelhao-130 -mt-1 mb-3"></p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">CNPJ</label>
+                        <input type="text" id="local-cnpj" class="campo" placeholder="00.000.000/0000-00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Telefone</label>
+                        <input type="text" id="local-telefone" class="campo">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Endereço</label>
+                    <input type="text" id="local-endereco" class="campo">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">E-mail</label>
+                    <input type="email" id="local-email" class="campo">
+                </div>
+                <div class="flex justify-end gap-2 mt-5">
+                    <button type="button" onclick="closeModal('modal-local')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-compra" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <h3 class="font-display text-lg font-bold text-vermelhao-180 mb-4">Registrar Compra</h3>
+            <form id="form-compra" onsubmit="salvarCompra(event)">
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Fornecedor *</label>
+                        <select id="compra-fornecedor" required class="campo"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Data *</label>
+                        <input type="date" id="compra-data" required class="campo">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Nota fiscal</label>
+                        <input type="text" id="compra-nf" class="campo">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Local de destino *</label>
+                        <select id="compra-local" required class="campo"></select>
+                    </div>
+                </div>
+                <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Itens</label>
+                <div id="compra-itens" class="space-y-2"></div>
+                <button type="button" onclick="adicionarItemCompra()" class="text-vermelhao-140 hover:text-vermelhao-160 text-sm font-semibold mt-2 flex items-center gap-1">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Adicionar item
+                </button>
+                <div class="flex justify-between items-center mt-4 mb-2 border-t border-vermelhao-60 pt-3">
+                    <span class="text-sm text-vermelhao-130">Total:</span>
+                    <span id="compra-total" class="font-bold text-vermelhao-180">R$ 0,00</span>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Registrado por</label>
+                    <input type="text" id="compra-registrado-por" class="campo">
+                </div>
+                <div class="flex justify-end gap-2 mt-3">
+                    <button type="button" onclick="closeModal('modal-compra')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Registrar Compra</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-compra-detalhe" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow-xl">
+            <h3 id="det-titulo" class="font-display text-lg font-bold text-vermelhao-180 mb-1">Compra</h3>
+            <p id="det-resumo" class="text-sm text-vermelhao-130 mb-4"></p>
+            <table class="w-full text-left text-sm text-vermelhao-150">
+                <thead class="bg-vermelhao-30 text-vermelhao-170 font-semibold uppercase text-xs">
+                    <tr><th class="p-3">Produto</th><th class="p-3">Qtd.</th><th class="p-3">Custo Unit.</th><th class="p-3">Subtotal</th></tr>
+                </thead>
+                <tbody id="det-itens" class="divide-y divide-vermelhao-50"></tbody>
+            </table>
+            <div class="flex justify-between items-center mt-4 border-t border-vermelhao-60 pt-3">
+                <span class="text-sm text-vermelhao-130">Total:</span>
+                <span id="det-total" class="font-bold text-vermelhao-180">R$ 0,00</span>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="closeModal('modal-compra-detalhe')" class="btn-secundario">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-venda" class="fixed inset-0 bg-vermelhao-190/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <h3 class="font-display text-lg font-bold text-vermelhao-180 mb-4">Nova Venda</h3>
+            <form id="form-venda" onsubmit="salvarVenda(event)">
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Local da venda *</label>
+                        <select id="venda-local" required class="campo" onchange="Telas.vendas.atualizarLinhas()"></select>
+                        <p class="text-xs text-vermelhao-130 mt-1">A baixa é feita neste local.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Cliente</label>
+                        <select id="venda-cliente" class="campo"><option value="">Sem cliente</option></select>
+                    </div>
+                </div>
+                <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Itens</label>
+                <div id="venda-itens" class="space-y-2"></div>
+                <button type="button" onclick="Telas.vendas.adicionarItem()" class="text-vermelhao-140 hover:text-vermelhao-160 text-sm font-semibold mt-2 flex items-center gap-1">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Adicionar item
+                </button>
+                <div class="grid grid-cols-2 gap-3 mt-4 border-t border-vermelhao-60 pt-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Desconto na venda (R$)</label>
+                        <input type="number" min="0" step="0.01" id="venda-desconto" value="0" class="campo" oninput="Telas.vendas.atualizarTotal()">
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm text-vermelhao-130">Total:</span>
+                        <div id="venda-total" class="font-bold text-vermelhao-180 text-lg">R$ 0,00</div>
+                    </div>
+                </div>
+                <div class="mb-1 mt-3">
+                    <label class="block text-xs font-semibold text-vermelhao-150 mb-1">Observação</label>
+                    <input type="text" id="venda-observacao" class="campo">
+                </div>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" onclick="closeModal('modal-venda')" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Finalizar venda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPTS_AQUI -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/telas/dashboard.js"></script>
+    <script src="js/telas/produtos.js"></script>
+    <script src="js/telas/reativar.js"></script>
+    <script src="js/telas/movimentacoes.js"></script>
+    <script src="js/telas/inventario.js"></script>
+    <script src="js/telas/vendas.js"></script>
+    <script src="js/telas/alertas.js"></script>
+    <script src="js/telas/compras.js"></script>
+    <script src="js/telas/fornecedores.js"></script>
+    <script src="js/telas/clientes.js"></script>
+    <script src="js/telas/colaboradores.js"></script>
+    <script src="js/telas/categorias.js"></script>
+    <script src="js/telas/locais.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

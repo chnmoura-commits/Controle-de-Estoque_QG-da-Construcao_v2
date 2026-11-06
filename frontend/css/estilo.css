@@ -1,0 +1,140 @@
+/* ==========================================================================
+   QG da Construção — Estilo global
+   Tema (cores/fontes) definido em js/tema.js via Tailwind. Aqui ficam os
+   estilos que o Tailwind utilitário não cobre bem.
+   ========================================================================== */
+
+:root {
+    --cor-fundo: #F4EDE8;
+    --cor-superficie: #FFFFFF;
+    --cor-borda: #EEE0D7;
+    --cor-texto: #694A31;
+    --cor-texto-forte: #3C2C1F;
+    --cor-primaria: #9F6C45;
+    --cor-primaria-escura: #835B3B;
+    --cor-destaque: #DD9D6C;
+    --cor-perigo: #B5483D;
+    --cor-sucesso: #5E7C5A;
+    --cor-info: #5B7B8C;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+}
+
+/* Navegação lateral ------------------------------------------------------- */
+nav .active-tab {
+    background-color: var(--cor-texto-forte);
+    color: #FBFAF8;
+    border-left-color: var(--cor-destaque);
+}
+
+/* Barra de rolagem -------------------------------------------------------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--cor-fundo); }
+::-webkit-scrollbar-thumb {
+    background: #D8B092;
+    border-radius: 9999px;
+    border: 2px solid var(--cor-fundo);
+}
+::-webkit-scrollbar-thumb:hover { background: #C28E66; }
+
+/* Tela de login ----------------------------------------------------------- */
+.tela-login {
+    background: radial-gradient(circle at 30% 20%, #503A27 0%, #2B2017 60%, #1c150f 100%);
+}
+
+.cartao-login {
+    backdrop-filter: blur(6px);
+}
+
+/* Toasts (notificações) --------------------------------------------------- */
+#area-toasts {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 22rem;
+}
+
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    animation: toast-entra 0.2s ease-out;
+}
+
+.toast.sucesso { background: #EFF4EE; border-color: #A2BC9E; color: #344430; }
+.toast.erro    { background: #FBF0EE; border-color: #DBA096; color: #6E2922; }
+.toast.info    { background: #EEF2F5; border-color: #9AB1BD; color: #33434D; }
+
+@keyframes toast-entra {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Componentes reutilizáveis ---------------------------------------------- */
+.campo {
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid var(--cor-borda);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--cor-texto-forte);
+}
+.campo:focus {
+    outline: none;
+    border-color: var(--cor-destaque);
+    box-shadow: 0 0 0 2px rgba(221, 157, 108, 0.2);
+}
+
+.btn-primario {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    background-color: var(--cor-primaria);
+    color: #fff;
+    border-radius: 0.5rem;
+    transition: background-color 0.15s;
+}
+.btn-primario:hover { background-color: var(--cor-primaria-escura); }
+
+.btn-primario-escuro {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    background-color: #503A27;
+    color: #FBFAF8;
+    border-radius: 0.5rem;
+    transition: background-color 0.15s;
+}
+.btn-primario-escuro:hover { background-color: #3C2C1F; }
+
+.btn-secundario {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--cor-primaria);
+    border-radius: 0.5rem;
+}
+.btn-secundario:hover { background-color: #F4EDE8; }
+
+/* Utilidades -------------------------------------------------------------- */
+.oculto { display: none !important; }
+
+.linha-tabela-vazia td {
+    padding: 1.5rem;
+    text-align: center;
+    color: #9F6C45;
+}
